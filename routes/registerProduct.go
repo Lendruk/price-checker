@@ -2,7 +2,7 @@ package routes
 
 import (
 	"net/http"
-	"price-tracker/parsers/globalData"
+	"price-tracker/parsers"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +16,7 @@ func RegisterProduct(context *gin.Context) {
 
 	context.BindJSON(&body)
 
-	globalData.QueryProduct(body.Product)
+	parsers.RegisterProductByName(body.Product)
 
 	context.JSON(http.StatusOK, gin.H{"product": body.Product})
 }

@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"os"
 	"price-tracker/models"
-	"strconv"
+	"price-tracker/utils"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/go-rod/rod"
 )
 
 const GlobalDataUrl = "https://www.globaldata.pt"
@@ -25,32 +26,23 @@ func ParseQueryPage(html string) {
 		productLink := strings.TrimSpace(productLinkElement.AttrOr("href", ""))
 		fullProductName := strings.TrimSpace(productLinkElement.Text())
 		productSku := selection.Find(".ck-product-box-sku").Text()
-		productPrice := selection.Find(".price__amount").Text()
-		productPrice = strings.ReplaceAll(productPrice, " ", "")
-		productPrice = strings.ReplaceAll(productPrice, "€", "")
-		productPrice = strings.ReplaceAll(productPrice, "\u00a0", "")
-		productPrice = strings.ReplaceAll(productPrice, ",", ".")
-
-		parsedPrice, _ := strconv.ParseFloat(productPrice, 64)
-		products = append(products, models.NewVendorProduct(fullProductName, parsedPrice, productLink, "https://www.globaldata.pt/", productSku))
+		productPrice, _ := utils.FormatPrice(selection.Find(".price__amount").Text())
+		products = append(products, models.NewVendorProduct(fullProductName, productPrice, productLink, "https://www.globaldata.pt/", productSku, models.InStock))
 	})
 
 	for _, v := range products {
-		if models.DoesProductExist(v.SKU) == false {
+		if models.DoesProductExist(v.SKU, v.Vendor) == false {
 			models.InsertProduct(v)
 		}
 	}
 }
 
-func QueryProduct(productName string) string {
+func QueryProduct(productName string, browser *rod.Browser) string {
 	url := GlobalDataUrl + "/?query=" + strings.ReplaceAll(productName, " ", "%2520")
 	fmt.Println(url)
 
 	data, _ := os.ReadFile("./globalDataSearchPage.html")
 	html := string(data)
-
-	// browser := rod.New().MustConnect()
-	// defer browser.Close()
 
 	// page := browser.MustPage(url)
 	// page.MustWaitStable()
