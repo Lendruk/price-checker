@@ -20,7 +20,7 @@ func ParseQueryPage(html string) {
 		panic(err)
 	}
 
-	products := make([]models.VendorProduct, 0)
+	products := make([]models.VendorEntry, 0)
 	document.Find("article.ck-product-box").Each(func(i int, selection *goquery.Selection) {
 		productLinkElement := selection.Find(".js-gtm-product-link-algolia")
 		productLink := strings.TrimSpace(productLinkElement.AttrOr("href", ""))
@@ -41,13 +41,14 @@ func ParseQueryPage(html string) {
 	})
 
 	for _, v := range products {
-		if models.DoesProductExist(v.SKU, v.Vendor) == false {
+		if models.DoesVendorProductExist(v.SKU, v.Vendor) == false {
 			models.InsertProduct(v)
 		}
 	}
 }
 
-func QueryProduct(productName string, browser *rod.Browser) string {
+// Queries for products according to the provided name
+func QueryProduct(productName string, browser *rod.Browser) {
 	url := GlobalDataUrl + "/?query=" + strings.ReplaceAll(productName, " ", "%2520")
 	fmt.Println(url)
 
@@ -64,6 +65,4 @@ func QueryProduct(productName string, browser *rod.Browser) string {
 	// }
 
 	ParseQueryPage(html)
-
-	return "test"
 }

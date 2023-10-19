@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 	"price-tracker/db"
-	"time"
 )
 
 type Availability int
@@ -16,50 +15,26 @@ const (
 )
 
 type Product struct {
-	ID            int
-	UniversalName string
+	Id            int
 	SKU           string
-	Vendors       []VendorProduct
+	VendorEntries []VendorEntry
 }
 
-type VendorProduct struct {
-	Id           int
-	Price        float64
-	Url          string
-	Vendor       string
-	SKU          string
-	FullName     string
-	LastUpdated  int64
-	Availability Availability
-}
+func GetProducts() []Product {
+	rows, err := db.GetDb().Query("SELECT id, sku FROM products")
+	defer rows.Close()
 
-func NewVendorProduct(fullName string, price float64, url string, vendor string, sku string, availability Availability) VendorProduct {
-	return VendorProduct{
-		FullName:     fullName,
-		Price:        price,
-		Url:          url,
-		Vendor:       vendor,
-		SKU:          sku,
-		Availability: availability,
-		LastUpdated:  time.Now().Unix(),
-	}
-}
-
-func GetProducts() []VendorProduct {
-	rows, err := db.GetDb().Query("SELECT id, fullName, price, url, vendor, sku, availability, lastUpdated FROM vendorProducts")
-
+	products := make([]Product, 0)
 	if err != nil {
 		panic(err)
 	}
 
-	defer rows.Close()
-
-	products := make([]VendorProduct, 0)
 	for rows.Next() {
-		var product VendorProduct
+		var product Product
 
-		err := rows.Scan(&product.Id, &product.FullName, &product.Price, &product.Url, &product.Vendor, &product.SKU, &product.Availability, &product.LastUpdated)
+		err := rows.Scan(&product.Id, &product.SKU)
 
+		product.VendorEntries = GetVendorEntriesByUniversalId(product.Id)
 		if err != nil {
 			panic(err)
 		}
@@ -70,23 +45,60 @@ func GetProducts() []VendorProduct {
 	return products
 }
 
-func DoesProductExist(sku string, vendor string) bool {
-	row := db.GetDb().QueryRow("SELECT id FROM vendorProducts WHERE sku = ? AND vendor = ?", sku, vendor)
+func GetProductHistory(productId int) []ProductHistory {
+	rows, err := db.GetDb().Query("SELECT id, productId, price, availability, updatedAt FROM productHistory WHERE productId = ?", productId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer rows.Close()
+
+	history := make([]ProductHistory, 0)
+	for rows.Next() {
+		var productHistory ProductHistory
+
+		err := rows.Scan(&productHistory.Id, &productHistory.ProductId, &productHistory.Price, &productHistory.Availability, &productHistory.UpdatedAt)
+
+		if err != nil {
+			panic(err)
+		}
+
+		history = append(history, productHistory)
+	}
+
+	return history
+}
+
+func getOrCreateProduct(sku string) Product {
+	row := db.GetDb().QueryRow("SELECT id FROM products WHERE sku = ?", sku)
 	var result int
 	err := row.Scan(&result)
 
 	if err != nil {
-		return false
+		statement, _ := db.GetDb().Prepare("INSERT INTO products (sku) VALUES (?)")
+		defer statement.Close()
+		_, err := statement.Exec(sku)
+
+		if err != nil {
+			panic(err)
+		}
+
+		return getOrCreateProduct(sku)
 	}
 
-	return true
+	return Product{Id: result, SKU: sku}
 }
 
-func InsertProduct(product VendorProduct) {
+func InsertProduct(product VendorEntry) {
 	fmt.Println("Inserting product ", product.FullName, product.SKU)
-	statement, _ := db.GetDb().Prepare("INSERT INTO vendorProducts (fullName, price, url, vendor, sku, lastUpdated, availability) VALUES (?, ?, ?, ?, ?, ?, ?)")
+	// Universal Product
+	universalId := getOrCreateProduct(product.SKU).Id
+
+	// Vendor Product
+	statement, _ := db.GetDb().Prepare("INSERT INTO vendorEntries (fullName, price, url, vendor, sku, lastUpdated, availability, universalId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
 	defer statement.Close()
-	_, err := statement.Exec(product.FullName, product.Price, product.Url, product.Vendor, product.SKU, product.LastUpdated, product.Availability)
+	_, err := statement.Exec(product.FullName, product.Price, product.Url, product.Vendor, product.SKU, product.LastUpdated, product.Availability, universalId)
 
 	if err != nil {
 		panic(err)

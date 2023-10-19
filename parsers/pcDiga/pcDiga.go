@@ -20,7 +20,7 @@ func ParseQueryPage(html string) {
 		panic(err)
 	}
 
-	products := make([]models.VendorProduct, 0)
+	products := make([]models.VendorEntry, 0)
 	document.Find("div[class='grid justify-between gap-x-2 gap-y-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-prod-list 2xl:grid-cols-prod-list-lg']").Children().Each(func(i int, s *goquery.Selection) {
 		productLinkElement := s.Find("a")
 		productLink := strings.TrimSpace(productLinkElement.AttrOr("href", ""))
@@ -52,7 +52,7 @@ func ParseQueryPage(html string) {
 	})
 
 	for _, v := range products {
-		if models.DoesProductExist(v.SKU, v.Vendor) == false {
+		if models.DoesVendorProductExist(v.SKU, v.Vendor) == false {
 			models.InsertProduct(v)
 		}
 	}
