@@ -2,7 +2,7 @@ package routes
 
 import (
 	"net/http"
-	globalData "price-tracker/parsers"
+	"price-tracker/parsers/globalData"
 
 	"github.com/gin-gonic/gin"
 )
