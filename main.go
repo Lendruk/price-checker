@@ -13,6 +13,7 @@ func main() {
 	fmt.Println("Starting Price Tracker!")
 	router := gin.Default()
 
-	router.POST("/product", routes.RegisterProduct)
+	router.POST("/products", routes.RegisterProduct)
+	router.GET("/products", routes.FetchProducts)
 	router.Run()
 }

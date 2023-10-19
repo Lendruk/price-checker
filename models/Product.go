@@ -23,6 +23,7 @@ type Product struct {
 }
 
 type VendorProduct struct {
+	Id           int
 	Price        float64
 	Url          string
 	Vendor       string
@@ -42,6 +43,31 @@ func NewVendorProduct(fullName string, price float64, url string, vendor string,
 		Availability: availability,
 		LastUpdated:  time.Now().Unix(),
 	}
+}
+
+func GetProducts() []VendorProduct {
+	rows, err := db.GetDb().Query("SELECT id, fullName, price, url, vendor, sku, availability, lastUpdated FROM vendorProducts")
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer rows.Close()
+
+	products := make([]VendorProduct, 0)
+	for rows.Next() {
+		var product VendorProduct
+
+		err := rows.Scan(&product.Id, &product.FullName, &product.Price, &product.Url, &product.Vendor, &product.SKU, &product.Availability, &product.LastUpdated)
+
+		if err != nil {
+			panic(err)
+		}
+
+		products = append(products, product)
+	}
+
+	return products
 }
 
 func DoesProductExist(sku string, vendor string) bool {
