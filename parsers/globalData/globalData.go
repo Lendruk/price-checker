@@ -25,9 +25,19 @@ func ParseQueryPage(html string) {
 		productLinkElement := selection.Find(".js-gtm-product-link-algolia")
 		productLink := strings.TrimSpace(productLinkElement.AttrOr("href", ""))
 		fullProductName := strings.TrimSpace(productLinkElement.Text())
+		availabilityText := strings.TrimSpace(selection.Find(".availability-product").Find(".small").Text())
+		productAvailability := models.InStock
+		switch availabilityText {
+		case "Esgotado":
+			productAvailability = models.OutOfStock
+		case "Por encomenda":
+			productAvailability = models.ByOrder
+		case "Poucas unidades":
+			productAvailability = models.InStock
+		}
 		productSku := selection.Find(".ck-product-box-sku").Text()
 		productPrice, _ := utils.FormatPrice(selection.Find(".price__amount").Text())
-		products = append(products, models.NewVendorProduct(fullProductName, productPrice, productLink, "https://www.globaldata.pt/", productSku, models.InStock))
+		products = append(products, models.NewVendorProduct(fullProductName, productPrice, productLink, "https://www.globaldata.pt/", productSku, productAvailability))
 	})
 
 	for _, v := range products {
