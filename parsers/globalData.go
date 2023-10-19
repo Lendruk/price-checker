@@ -1,4 +1,4 @@
-package parsers
+package globalData
 
 import (
 	"fmt"
@@ -34,6 +34,12 @@ func ParseQueryPage(html string) {
 		parsedPrice, _ := strconv.ParseFloat(productPrice, 64)
 		products = append(products, models.NewVendorProduct(fullProductName, parsedPrice, productLink, "https://www.globaldata.pt/", productSku))
 	})
+
+	for _, v := range products {
+		if models.DoesProductExist(v.SKU) == false {
+			models.InsertProduct(v)
+		}
+	}
 }
 
 func QueryProduct(productName string) string {

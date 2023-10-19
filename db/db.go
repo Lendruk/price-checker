@@ -12,6 +12,8 @@ var db *sql.DB
 func init() {
 	sqlDb, err := sql.Open("sqlite3", "./price-tracker.db")
 
+	sqlDb.Exec("CREATE TABLE IF NOT EXISTS vendorProducts (id INTEGER PRIMARY KEY, fullName TEXT, price REAL, url TEXT, vendor TEXT, sku TEXT, lastUpdated INTEGER)")
+
 	if err != nil {
 		panic(err)
 	}
