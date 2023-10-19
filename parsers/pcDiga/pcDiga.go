@@ -13,16 +13,6 @@ import (
 
 const PcDigaUrl = "https://www.pcdiga.com"
 
-func productElementMatcher(_ int, s *goquery.Selection) bool {
-	attr, exists := s.Attr("class")
-
-	if exists == false {
-		return false
-	} else {
-		return attr == "grid justify-between gap-x-2 gap-y-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-prod-list 2xl:grid-cols-prod-list-lg"
-	}
-}
-
 func ParseQueryPage(html string) {
 	document, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 
@@ -31,7 +21,7 @@ func ParseQueryPage(html string) {
 	}
 
 	products := make([]models.VendorProduct, 0)
-	document.Find("div").FilterFunction(productElementMatcher).Children().Each(func(i int, s *goquery.Selection) {
+	document.Find("div[class='grid justify-between gap-x-2 gap-y-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-prod-list 2xl:grid-cols-prod-list-lg']").Children().Each(func(i int, s *goquery.Selection) {
 		productLinkElement := s.Find("a")
 		productLink := strings.TrimSpace(productLinkElement.AttrOr("href", ""))
 		productName := strings.TrimSpace(productLinkElement.Find("span").Text())
