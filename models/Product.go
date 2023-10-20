@@ -45,31 +45,6 @@ func GetProducts() []Product {
 	return products
 }
 
-func GetProductHistory(productId int) []ProductHistory {
-	rows, err := db.GetDb().Query("SELECT id, productId, price, availability, updatedAt FROM productHistory WHERE productId = ?", productId)
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer rows.Close()
-
-	history := make([]ProductHistory, 0)
-	for rows.Next() {
-		var productHistory ProductHistory
-
-		err := rows.Scan(&productHistory.Id, &productHistory.ProductId, &productHistory.Price, &productHistory.Availability, &productHistory.UpdatedAt)
-
-		if err != nil {
-			panic(err)
-		}
-
-		history = append(history, productHistory)
-	}
-
-	return history
-}
-
 func getOrCreateProduct(sku string) Product {
 	row := db.GetDb().QueryRow("SELECT id FROM products WHERE sku = ?", sku)
 	var result int

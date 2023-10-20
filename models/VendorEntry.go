@@ -1,8 +1,16 @@
 package models
 
 import (
+	"fmt"
 	"price-tracker/db"
 	"time"
+)
+
+type Vendor int
+
+const (
+	GlobalData Vendor = iota
+	PCDiga
 )
 
 type VendorEntry struct {
@@ -10,7 +18,7 @@ type VendorEntry struct {
 	UniversalId  int
 	Price        float64
 	Url          string
-	Vendor       string
+	Vendor       Vendor
 	SKU          string
 	FullName     string
 	LastUpdated  int64
@@ -19,14 +27,14 @@ type VendorEntry struct {
 }
 
 type ProductHistory struct {
-	Id           int
-	ProductId    int
-	Price        float64
-	Availability Availability
-	UpdatedAt    int64
+	Id            int
+	VendorEntryId int
+	Price         float64
+	Availability  Availability
+	UpdatedAt     int64
 }
 
-func NewVendorProduct(fullName string, price float64, url string, vendor string, sku string, availability Availability) VendorEntry {
+func NewVendorProduct(fullName string, price float64, url string, vendor Vendor, sku string, availability Availability) VendorEntry {
 	return VendorEntry{
 		FullName:     fullName,
 		Price:        price,
@@ -36,6 +44,42 @@ func NewVendorProduct(fullName string, price float64, url string, vendor string,
 		Availability: availability,
 		LastUpdated:  time.Now().Unix(),
 	}
+}
+
+func UpdateVendorEntry(newPrice float64, newAvailability Availability, sku string, vendor Vendor) error {
+	product, err := GetVendorProductEntry(sku, vendor)
+
+	if product.Availability != newAvailability || product.Price != newPrice {
+		statement, _ := db.GetDb().Prepare("INSERT INTO productHistory (vendorEntryId, price, availability, updatedAt) VALUES (?, ?, ?, ?)")
+		defer statement.Close()
+		_, insertionError := statement.Exec(product.Id, product.Price, product.Availability, product.LastUpdated)
+
+		if insertionError != nil {
+			fmt.Println(insertionError)
+		}
+
+		_, updateError := db.GetDb().Exec("UPDATE vendorEntries SET price=?,availability=?,lastUpdated=? WHERE sku=? AND vendor=?", newPrice, newAvailability, time.Now().Unix(), sku, vendor)
+
+		if updateError != nil {
+			return updateError
+		}
+
+	}
+
+	return err
+}
+
+func GetVendorProductEntry(sku string, vendor Vendor) (VendorEntry, error) {
+	row := db.GetDb().QueryRow("SELECT id, universalId, fullName, price, url, vendor, sku, availability, lastUpdated FROM vendorEntries WHERE sku = ? AND vendor = ?", sku, vendor)
+	var result VendorEntry
+	err := row.Scan(&result.Id, &result.UniversalId, &result.FullName, &result.Price, &result.Url, &result.Vendor, &result.SKU, &result.Availability, &result.LastUpdated)
+
+	if err != nil {
+		fmt.Println("Error fetching product ")
+		return result, err
+	}
+
+	return result, nil
 }
 
 func GetVendorEntries(sku string) []VendorEntry {
@@ -102,7 +146,7 @@ func GetVendorEntriesByUniversalId(universalId int) []VendorEntry {
 	return products
 }
 
-func DoesVendorProductExist(sku string, vendor string) bool {
+func DoesVendorProductExist(sku string, vendor Vendor) bool {
 	row := db.GetDb().QueryRow("SELECT id FROM vendorEntries WHERE sku = ? AND vendor = ?", sku, vendor)
 	var result int
 	err := row.Scan(&result)
@@ -112,4 +156,30 @@ func DoesVendorProductExist(sku string, vendor string) bool {
 	}
 
 	return true
+}
+
+func GetProductHistory(productId int) []ProductHistory {
+	rows, err := db.GetDb().Query("SELECT id, vendorEntryId, price, availability, updatedAt FROM productHistory WHERE vendorEntryId = ?", productId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer rows.Close()
+
+	history := make([]ProductHistory, 0)
+
+	for rows.Next() {
+		var productHistory ProductHistory
+
+		err := rows.Scan(&productHistory.Id, &productHistory.VendorEntryId, &productHistory.Price, &productHistory.Availability, &productHistory.UpdatedAt)
+
+		if err != nil {
+			panic(err)
+		}
+
+		history = append(history, productHistory)
+	}
+
+	return history
 }

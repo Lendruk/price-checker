@@ -14,6 +14,7 @@ func main() {
 	router := gin.Default()
 
 	router.POST("/products", routes.RegisterProduct)
+	router.POST("/products/update", routes.UpdateProducts)
 	router.GET("/products", routes.FetchProducts)
 	router.Run()
 }
