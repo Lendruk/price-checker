@@ -1,0 +1,25 @@
+### Products
+
+GET http://localhost:8080/products
+
+### Add item to watch list
+PUT http://localhost:8080/users/watchlist HTTP/1.1
+content-type: application/json
+
+{
+  "user": 1,
+  "product": 2
+}
+
+### Users
+
+### Create user
+POST http://localhost:8080/users HTTP/1.1
+
+### Get user
+GET http://localhost:8080/users/1 HTTP/1.1
+
+### Get non existent user
+GET http://localhost:8080/users/100 HTTP/1.1
+
+

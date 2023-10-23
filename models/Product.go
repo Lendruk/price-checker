@@ -45,6 +45,21 @@ func GetProducts() []Product {
 	return products
 }
 
+func GetProductById(productId int) Product {
+	row := db.GetDb().QueryRow("SELECT * FROM products WHERE id = ? ", productId)
+
+	var product Product
+	err := row.Scan(&product.Id, &product.SKU)
+
+	if err != nil {
+		panic(err)
+	}
+
+	product.VendorEntries = GetVendorEntries(product.SKU)
+
+	return product
+}
+
 func getOrCreateProduct(sku string) Product {
 	row := db.GetDb().QueryRow("SELECT id FROM products WHERE sku = ?", sku)
 	var result int
