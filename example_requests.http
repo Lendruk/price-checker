@@ -3,13 +3,15 @@
 GET http://localhost:8080/products
 
 ### Add item to watch list
-PUT http://localhost:8080/users/watchlist HTTP/1.1
+PUT http://localhost:8080/users/1/watchlist HTTP/1.1
 content-type: application/json
 
 {
-  "user": 1,
   "product": 2
 }
+
+### Remove item from watch list
+DELETE http://localhost:8080/users/1/watchlist/2
 
 ### Users
 

@@ -18,7 +18,8 @@ func main() {
 	router.GET("/products", routes.FetchProducts)
 
 	router.POST("/users", routes.RegisterUser)
-	router.PUT("/users/watchlist", routes.AddProductToWatchlist)
+	router.PUT("/users/:id/watchlist", routes.AddProductToWatchlist)
+	router.DELETE("/users/:id/watchlist/:product", routes.RemoveProductFromWatchlist)
 	router.GET("/users/:id", routes.GetUser)
 
 	router.Run()
