@@ -22,5 +22,7 @@ func main() {
 	router.DELETE("/users/:id/watchlist/:product", routes.RemoveProductFromWatchlist)
 	router.GET("/users/:id", routes.GetUser)
 
+	router.POST("/webhooks", routes.RegisterWebhook)
+	router.POST("/webhooks/users", routes.RegisterWebhookUser)
 	router.Run()
 }

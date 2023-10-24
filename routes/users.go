@@ -12,6 +12,23 @@ func RegisterUser(context *gin.Context) {
 	context.JSON(201, newUser)
 }
 
+func RegisterWebhookUser(context *gin.Context) {
+	type RequestBody struct {
+		Hook string `json:"hook"`
+	}
+	var body RequestBody
+
+	context.BindJSON(&body)
+	newUser := models.NewUser()
+	err := models.AddUserToWebHook(body.Hook, int(newUser.Id))
+
+	if err != nil {
+		context.JSON(500, gin.H{"message": "Error creating webhook user"})
+	} else {
+		context.JSON(201, newUser)
+	}
+}
+
 type AddToWatchListRequestBody struct {
 	Product int `json:"product"`
 }

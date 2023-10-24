@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS productHistory (
   FOREIGN KEY(vendorEntryId) REFERENCES vendorEntries(id)
 );
 
-CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY, sku TEXT);
+CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY, sku TEXT UNIQUE);
 
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY
@@ -31,4 +31,16 @@ CREATE TABLE IF NOT EXISTS watchlists (
   product INTEGER,
   FOREIGN KEY(user) REFERENCES users(id),
   FOREIGN KEY(product) REFERENCES products(id)
-)
+);
+
+CREATE TABLE IF NOT EXISTS webhooks (
+  id INTEGER PRIMARY KEY,
+  hook TEXT UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS webhook_users (
+  hook INTEGER,
+  user INTEGER,
+  FOREIGN KEY(hook) REFERENCES webhooks (id),
+  FOREIGN KEY (user) REFERENCES users (id)
+);
