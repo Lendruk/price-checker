@@ -48,7 +48,7 @@ func ParseQueryPage(html string) {
 	}
 }
 
-func ParseProductPage(html string, sku string, vendor models.Vendor) {
+func CheckProductPageForUpdates(html string, sku string, vendor models.Vendor) {
 	document, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 
 	if err != nil {
@@ -101,7 +101,7 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) {
 	data, _ := os.ReadFile("./globalDataProductPage.html")
 	html := string(data)
 
-	ParseProductPage(html, product.SKU, product.Vendor)
+	CheckProductPageForUpdates(html, product.SKU, product.Vendor)
 
 	// page := browser.MustPage(url)
 	// // Wait stable being funky for some reason
@@ -112,4 +112,41 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) {
 	// if err != nil {
 	// 	panic(err)
 	// }
+}
+
+func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, error) {
+	fmt.Println(url)
+
+	// TODO replace with real browser call
+	data, _ := os.ReadFile("./globalDataProductPage.html")
+	html := string(data)
+
+	document, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	productElement := document.Find(".ck-product-cta-box-inner")
+	availabilityText := strings.TrimSpace(productElement.Find(".custom-element.availability-product").Find(".small").Text())
+	productFullName := strings.TrimSpace(productElement.Find("h1[class='mb-0 h4 h2-md']").Text())
+	availabilityText = strings.TrimSpace(strings.Split(availabilityText, "-")[1])
+	productSKU := strings.TrimSpace(document.Find("div[class='ck-product-sku-ean-warranty-info__item small d-inline-block my-1']").First().Text())
+	productSKU = strings.Split(productSKU, " ")[1]
+	productAvailability := models.InStock
+
+	switch availabilityText {
+	case "Esgotado":
+		productAvailability = models.OutOfStock
+	case "Por encomenda":
+		productAvailability = models.ByOrder
+	case "Poucas unidades":
+		productAvailability = models.InStock
+	}
+
+	productPrice, _ := utils.FormatPrice(strings.TrimSpace(productElement.Find(".price__amount").Text()))
+
+	vendorProduct := models.NewVendorProduct(productFullName, productPrice, url, models.GlobalData, productSKU, productAvailability)
+
+	return models.InsertProduct(vendorProduct), nil
 }

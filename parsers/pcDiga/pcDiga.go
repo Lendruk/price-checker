@@ -58,7 +58,7 @@ func ParseQueryPage(html string) {
 	}
 }
 
-func ParseProductPage(html string, sku string, vendor models.Vendor) {
+func CheckProductPageForUpdates(html string, sku string, vendor models.Vendor) {
 	document, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 
 	if err != nil {
@@ -100,7 +100,7 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) {
 	data, _ := os.ReadFile("./pcDigaProductPage.html")
 	html := string(data)
 
-	ParseProductPage(html, product.SKU, product.Vendor)
+	CheckProductPageForUpdates(html, product.SKU, product.Vendor)
 
 	// page := browser.MustPage(url)
 	// // Wait stable being funky for some reason
@@ -111,4 +111,31 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) {
 	// if err != nil {
 	// 	panic(err)
 	// }
+}
+
+func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, error) {
+	fmt.Println(url)
+
+	// TODO replace with real browser call
+	data, _ := os.ReadFile("./pcDigaProductPage.html")
+	html := string(data)
+
+	document, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	productElement := document.Find("div[class='md:p-4 lg:bg-background-off lg:rounded-md hidden lg:grid gap-y-4']")
+
+	productPrice, _ := utils.FormatPrice(productElement.Find("div[class='text-primary text-2xl md:text-3xl font-black']").Text())
+	availabilityText := strings.TrimSpace(productElement.Find(".stock_availability").Text())
+	productAvailability := mapAvailability(availabilityText)
+	productFullName := strings.TrimSpace(productElement.Find("h1[class='font-bold text-2xl']").Text())
+	productSKU := strings.TrimSpace(document.Find("div[class='flex flex-col lg:block text-xs']").First().Text())
+	productSKU = strings.Split(productSKU, " ")[1]
+
+	vendorProduct := models.NewVendorProduct(productFullName, productPrice, url, models.PCDiga, productSKU, productAvailability)
+
+	return models.InsertProduct(vendorProduct), nil
 }

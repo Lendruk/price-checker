@@ -42,10 +42,30 @@ content-type: application/json
 }
 
 
-### Register products
-POST http://localhost:8080/products
+### Register products (search)
+POST http://localhost:8080/products/search
 Content-Type: application/json
 
 {
   "product": "7800x3d"
+}
+
+### Register product by url (globaldata)
+POST http://localhost:8080/webhooks/products
+Content-Type: application/json
+
+{
+  "user": 1,
+  "url": "https://www.globaldata.pt/processador-amd-ryzen-7-7800x3d-8-core-42ghz-50ghz-104mb-am5-100-100000910wof",
+  "hook": "http://54.38.214.68:8080/price-hook"
+}
+
+### Register product by url (pcdiga)
+POST http://localhost:8080/webhooks/products
+Content-Type: application/json
+
+{
+  "user": 1,
+  "url": "https://www.pcdiga.pt/processador-amd-ryzen-7-7800x3d-8-core-42ghz-50ghz-104mb-am5-100-100000910wof",
+  "hook": "http://54.38.214.68:8080/price-hook"
 }

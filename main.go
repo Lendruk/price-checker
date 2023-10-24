@@ -13,7 +13,7 @@ func main() {
 	fmt.Println("Starting Price Tracker!")
 	router := gin.Default()
 
-	router.POST("/products", routes.RegisterProduct)
+	router.POST("/products/search", routes.SearchProducts)
 	router.POST("/products/update", routes.UpdateProducts)
 	router.GET("/products", routes.FetchProducts)
 
@@ -24,5 +24,6 @@ func main() {
 
 	router.POST("/webhooks", routes.RegisterWebhook)
 	router.POST("/webhooks/users", routes.RegisterWebhookUser)
+	router.POST("/webhooks/products", routes.RegisterWebhookProduct)
 	router.Run()
 }

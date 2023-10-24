@@ -80,17 +80,23 @@ func getOrCreateProduct(sku string) Product {
 	return Product{Id: result, SKU: sku}
 }
 
-func InsertProduct(product VendorEntry) {
+func InsertProduct(product VendorEntry) Product {
 	fmt.Println("Inserting product ", product.FullName, product.SKU)
 	// Universal Product
-	universalId := getOrCreateProduct(product.SKU).Id
+	universalProduct := getOrCreateProduct(product.SKU)
 
 	// Vendor Product
-	statement, _ := db.GetDb().Prepare("INSERT INTO vendorEntries (fullName, price, url, vendor, sku, lastUpdated, availability, universalId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-	defer statement.Close()
-	_, err := statement.Exec(product.FullName, product.Price, product.Url, product.Vendor, product.SKU, product.LastUpdated, product.Availability, universalId)
+	if DoesVendorProductExist(product.SKU, product.Vendor) == true {
+		UpdateVendorEntry(product.Price, product.Availability, product.SKU, product.Vendor)
+	} else {
+		statement, _ := db.GetDb().Prepare("INSERT INTO vendorEntries (fullName, price, url, vendor, sku, lastUpdated, availability, universalId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+		defer statement.Close()
+		_, err := statement.Exec(product.FullName, product.Price, product.Url, product.Vendor, product.SKU, product.LastUpdated, product.Availability, universalProduct.Id)
 
-	if err != nil {
-		panic(err)
+		if err != nil {
+			panic(err)
+		}
 	}
+
+	return universalProduct
 }

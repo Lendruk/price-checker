@@ -1,6 +1,8 @@
 package models
 
-import "price-tracker/db"
+import (
+	"price-tracker/db"
+)
 
 func RegisterWebhook(hook string) error {
 	db := db.GetDb()
@@ -12,11 +14,22 @@ func RegisterWebhook(hook string) error {
 	return insertionErr
 }
 
+func IsUserInWebhook(hook int, userId int) bool {
+	row := db.GetDb().QueryRow("SELECT hook FROM webhook_users WHERE hook = ? AND user = ?", hook, userId)
+	var result int
+	err := row.Scan(&result)
+
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
 func AddUserToWebHook(hook string, userId int) error {
 	db := db.GetDb()
 
 	var hookId int
-
 	row := db.QueryRow("SELECT id from webhooks WHERE hook = ?", hook)
 	err := row.Scan(&hookId)
 
@@ -24,6 +37,9 @@ func AddUserToWebHook(hook string, userId int) error {
 		return err
 	}
 
-	_, insertionErr := db.Exec("INSERT INTO webhook_users (hook, user) VALUES (?, ?)", hookId, userId)
-	return insertionErr
+	if IsUserInWebhook(hookId, userId) == false {
+		_, insertionErr := db.Exec("INSERT INTO webhook_users (hook, user) VALUES (?, ?)", hookId, userId)
+		return insertionErr
+	}
+	return nil
 }
