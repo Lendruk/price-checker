@@ -4,6 +4,12 @@ import (
 	"price-tracker/db"
 )
 
+type Webhook struct {
+	Id    int
+	Hook  string
+	users []int
+}
+
 func RegisterWebhook(hook string) error {
 	db := db.GetDb()
 
@@ -12,6 +18,46 @@ func RegisterWebhook(hook string) error {
 	_, insertionErr := statement.Exec(hook)
 
 	return insertionErr
+}
+
+func GetRegisteredWebhooks() []Webhook {
+	db := db.GetDb()
+
+	hooks := make([]Webhook, 0)
+
+	rows, err := db.Query("SELECT * FROM webhooks")
+
+	if err != nil {
+		panic(err)
+	}
+
+	for rows.Next() {
+		var hook Webhook
+		rows.Scan(&hook.Id, &hook.Hook)
+		hooks = append(hooks, hook)
+
+		hook.users = GetWebbhookUsers(hook.Id)
+	}
+
+	return hooks
+}
+
+func GetWebbhookUsers(hookId int) []int {
+	users := make([]int, 0)
+	rows, err := db.GetDb().Query("SELECT user FROM webhook_users WHERE hook = ?", hookId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	for rows.Next() {
+		var user int
+		rows.Scan(&user)
+
+		users = append(users, user)
+	}
+
+	return users
 }
 
 func IsUserInWebhook(hook int, userId int) bool {

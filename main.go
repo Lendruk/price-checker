@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"price-tracker/cron"
 	"price-tracker/routes"
 
 	"github.com/gin-gonic/gin"
@@ -25,5 +26,7 @@ func main() {
 	router.POST("/webhooks", routes.RegisterWebhook)
 	router.POST("/webhooks/users", routes.RegisterWebhookUser)
 	router.POST("/webhooks/products", routes.RegisterWebhookProduct)
+	cron.RegisterProductUpdateCronJob()
 	router.Run()
+
 }

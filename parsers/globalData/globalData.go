@@ -48,7 +48,7 @@ func ParseQueryPage(html string) {
 	}
 }
 
-func CheckProductPageForUpdates(html string, sku string, vendor models.Vendor) {
+func CheckProductPageForUpdates(html string, sku string, vendor models.Vendor) (bool, models.VendorEntry) {
 	document, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 
 	if err != nil {
@@ -71,7 +71,9 @@ func CheckProductPageForUpdates(html string, sku string, vendor models.Vendor) {
 
 	productPrice, _ := utils.FormatPrice(strings.TrimSpace(productElement.Find(".price__amount").Text()))
 
-	models.UpdateVendorEntry(productPrice, productAvailability, sku, vendor)
+	updated, entry, err := models.UpdateVendorEntry(productPrice, productAvailability, sku, vendor)
+
+	return updated, entry
 }
 
 // Queries for products according to the provided name
@@ -94,14 +96,14 @@ func QueryProduct(productName string, browser *rod.Browser) {
 	ParseQueryPage(html)
 }
 
-func UpdateProduct(product models.VendorEntry, browser *rod.Browser) {
+func UpdateProduct(product models.VendorEntry, browser *rod.Browser) (bool, models.VendorEntry) {
 	url := product.Url
 	fmt.Println(url)
 
 	data, _ := os.ReadFile("./globalDataProductPage.html")
 	html := string(data)
 
-	CheckProductPageForUpdates(html, product.SKU, product.Vendor)
+	updated, entry := CheckProductPageForUpdates(html, product.SKU, product.Vendor)
 
 	// page := browser.MustPage(url)
 	// // Wait stable being funky for some reason
@@ -112,6 +114,8 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) {
 	// if err != nil {
 	// 	panic(err)
 	// }
+
+	return updated, entry
 }
 
 func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, error) {

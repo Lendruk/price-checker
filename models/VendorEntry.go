@@ -46,27 +46,32 @@ func NewVendorProduct(fullName string, price float64, url string, vendor Vendor,
 	}
 }
 
-func UpdateVendorEntry(newPrice float64, newAvailability Availability, sku string, vendor Vendor) error {
+func UpdateVendorEntry(newPrice float64, newAvailability Availability, sku string, vendor Vendor) (bool, VendorEntry, error) {
 	product, err := GetVendorProductEntry(sku, vendor)
 
 	if product.Availability != newAvailability || product.Price != newPrice {
 		statement, _ := db.GetDb().Prepare("INSERT INTO productHistory (vendorEntryId, price, availability, updatedAt) VALUES (?, ?, ?, ?)")
 		defer statement.Close()
-		_, insertionError := statement.Exec(product.Id, product.Price, product.Availability, product.LastUpdated)
+		insertionResult, insertionError := statement.Exec(product.Id, product.Price, product.Availability, product.LastUpdated)
 
 		if insertionError != nil {
 			fmt.Println(insertionError)
 		}
 
 		_, updateError := db.GetDb().Exec("UPDATE vendorEntries SET price=?,availability=?,lastUpdated=? WHERE sku=? AND vendor=?", newPrice, newAvailability, time.Now().Unix(), sku, vendor)
+		newId, _ := insertionResult.LastInsertId()
+		newHistory, _ := GetVendorHistoryEntryById(int(newId))
+		product.History = append(product.History, newHistory)
 
 		if updateError != nil {
-			return updateError
+			return false, VendorEntry{}, updateError
+		} else {
+			return true, VendorEntry{}, nil
 		}
 
 	}
 
-	return err
+	return false, VendorEntry{}, err
 }
 
 func GetVendorProductEntry(sku string, vendor Vendor) (VendorEntry, error) {
@@ -74,6 +79,7 @@ func GetVendorProductEntry(sku string, vendor Vendor) (VendorEntry, error) {
 	var result VendorEntry
 	err := row.Scan(&result.Id, &result.UniversalId, &result.FullName, &result.Price, &result.Url, &result.Vendor, &result.SKU, &result.Availability, &result.LastUpdated)
 
+	result.History = GetVendorEntryHistory(result.Id)
 	if err != nil {
 		fmt.Println("Error fetching product ")
 		return result, err
@@ -109,7 +115,7 @@ func GetAllVendorEntries() []VendorEntry {
 
 		err := rows.Scan(&product.Id, &product.FullName, &product.Price, &product.Url, &product.Vendor, &product.SKU, &product.Availability, &product.LastUpdated)
 
-		product.History = GetProductHistory(product.Id)
+		product.History = GetVendorEntryHistory(product.Id)
 		if err != nil {
 			panic(err)
 		}
@@ -135,7 +141,7 @@ func GetVendorEntriesByUniversalId(universalId int) []VendorEntry {
 
 		err := rows.Scan(&product.Id, &product.FullName, &product.Price, &product.Url, &product.Vendor, &product.SKU, &product.Availability, &product.LastUpdated)
 
-		product.History = GetProductHistory(product.Id)
+		product.History = GetVendorEntryHistory(product.Id)
 		if err != nil {
 			panic(err)
 		}
@@ -158,7 +164,7 @@ func DoesVendorProductExist(sku string, vendor Vendor) bool {
 	return true
 }
 
-func GetProductHistory(productId int) []ProductHistory {
+func GetVendorEntryHistory(productId int) []ProductHistory {
 	rows, err := db.GetDb().Query("SELECT id, vendorEntryId, price, availability, updatedAt FROM productHistory WHERE vendorEntryId = ?", productId)
 
 	if err != nil {
@@ -182,4 +188,18 @@ func GetProductHistory(productId int) []ProductHistory {
 	}
 
 	return history
+}
+
+func GetVendorHistoryEntryById(historyId int) (ProductHistory, error) {
+	row := db.GetDb().QueryRow("SELECT id, vendorEntryId, price, availability, updatedAt FROM productHistory WHERE id = ?", historyId)
+
+	var productHistory ProductHistory
+
+	err := row.Scan(&productHistory.Id, &productHistory.VendorEntryId, &productHistory.Price, &productHistory.Availability, &productHistory.UpdatedAt)
+
+	if err != nil {
+		return ProductHistory{}, err
+	} else {
+		return productHistory, nil
+	}
 }

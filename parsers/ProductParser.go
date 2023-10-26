@@ -32,16 +32,25 @@ func RegisterProductFromUrl(url string) (models.Product, error) {
 	return models.Product{}, errors.New("Sent url does not have a parser")
 }
 
-func UpdateProducts(products []models.VendorEntry) {
+func UpdateProducts(products []models.VendorEntry) []models.VendorEntry {
 	browser := rod.New().MustConnect()
 	defer browser.Close()
 
+	updatedEntries := make([]models.VendorEntry, 0)
 	for _, entry := range products {
 		switch entry.Vendor {
 		case models.GlobalData:
-			globalData.UpdateProduct(entry, browser)
+			updated, entry := globalData.UpdateProduct(entry, browser)
+			if updated {
+				updatedEntries = append(updatedEntries, entry)
+			}
 		case models.PCDiga:
-			pcDiga.UpdateProduct(entry, browser)
+			updated, entry := pcDiga.UpdateProduct(entry, browser)
+			if updated {
+				updatedEntries = append(updatedEntries, entry)
+			}
 		}
 	}
+
+	return updatedEntries
 }

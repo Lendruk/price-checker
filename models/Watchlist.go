@@ -48,3 +48,14 @@ func IsProductInWatchlist(userId int, productId int) bool {
 	}
 	return true
 }
+
+func GetAllProductsInWatchlists() ([]int, error) {
+	db := db.GetDb()
+	var products []int
+
+	rows, err := db.Query("SELECT product FROM watchlists")
+
+	rows.Scan(&products)
+
+	return products, err
+}
