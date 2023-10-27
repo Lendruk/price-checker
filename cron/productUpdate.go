@@ -17,10 +17,12 @@ func RegisterProductUpdateCronJob() {
 	// Registers cron job
 	scheduler := gocron.NewScheduler(time.UTC)
 
-	scheduler.Every(30).Second().WaitForSchedule().Do(func() {
+	scheduler.Every(10).Second().WaitForSchedule().Do(func() {
 		fmt.Println("Updating products")
 		// Get all vendor products that have watchers
 		productIds, _ := models.GetAllProductsInWatchlists()
+
+		fmt.Println(productIds)
 
 		vendorEntries := make([]models.VendorEntry, 0)
 		for _, id := range productIds {
@@ -30,19 +32,24 @@ func RegisterProductUpdateCronJob() {
 				vendorEntries = append(vendorEntries, entry)
 			}
 		}
+
 		// Run parsers.UpdateProducts (need to update method to return products that have changes)
 		updatedEntries := parsers.UpdateProducts(vendorEntries)
 
-		for _, webhook := range models.GetRegisteredWebhooks() {
+		if len(updatedEntries) > 0 {
+			for _, webhook := range models.GetRegisteredWebhooks() {
 
-			body, err := json.Marshal(updatedEntries)
+				body, err := json.Marshal(updatedEntries)
 
-			if err != nil {
-				panic(err)
+				if err != nil {
+					panic(err)
+				}
+				// TODO: Separate updated list according to the webhook with users that have them in the watchlist
+				http.Post(webhook.Hook, "application/json", bytes.NewBuffer(body))
 			}
-			// TODO: Separate updated list according to the webhook with users that have them in the watchlist
-			http.Post(webhook.Hook, "application/json", bytes.NewBuffer(body))
 		}
+
+		fmt.Println("Product update done!")
 	})
 
 	scheduler.StartAsync()

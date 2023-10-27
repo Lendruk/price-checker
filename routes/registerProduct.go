@@ -45,4 +45,6 @@ func RegisterWebhookProduct(context *gin.Context) {
 
 	// Add user to webhook user list if not there yet
 	models.AddUserToWebHook(body.Hook, body.User)
+
+	context.JSON(200, product.VendorEntries)
 }

@@ -77,7 +77,7 @@ func getOrCreateProduct(sku string) Product {
 		return getOrCreateProduct(sku)
 	}
 
-	return Product{Id: result, SKU: sku}
+	return Product{Id: result, SKU: sku, VendorEntries: make([]VendorEntry, 0)}
 }
 
 func InsertProduct(product VendorEntry) Product {
@@ -87,7 +87,11 @@ func InsertProduct(product VendorEntry) Product {
 
 	// Vendor Product
 	if DoesVendorProductExist(product.SKU, product.Vendor) == true {
-		UpdateVendorEntry(product.Price, product.Availability, product.SKU, product.Vendor)
+		updated, vendorEntry, _ := UpdateVendorEntry(product.Price, product.Availability, product.SKU, product.Vendor)
+
+		if updated {
+			universalProduct.VendorEntries = append(universalProduct.VendorEntries, vendorEntry)
+		}
 	} else {
 		statement, _ := db.GetDb().Prepare("INSERT INTO vendorEntries (fullName, price, url, vendor, sku, lastUpdated, availability, universalId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
 		defer statement.Close()
@@ -96,6 +100,8 @@ func InsertProduct(product VendorEntry) Product {
 		if err != nil {
 			panic(err)
 		}
+
+		universalProduct.VendorEntries = append(universalProduct.VendorEntries, product)
 	}
 
 	return universalProduct

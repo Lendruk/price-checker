@@ -62,11 +62,12 @@ func UpdateVendorEntry(newPrice float64, newAvailability Availability, sku strin
 		newId, _ := insertionResult.LastInsertId()
 		newHistory, _ := GetVendorHistoryEntryById(int(newId))
 		product.History = append(product.History, newHistory)
+		updatedProduct, _ := GetVendorProductEntry(sku, vendor)
 
 		if updateError != nil {
 			return false, VendorEntry{}, updateError
 		} else {
-			return true, VendorEntry{}, nil
+			return true, updatedProduct, nil
 		}
 
 	}

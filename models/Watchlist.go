@@ -55,7 +55,11 @@ func GetAllProductsInWatchlists() ([]int, error) {
 
 	rows, err := db.Query("SELECT product FROM watchlists")
 
-	rows.Scan(&products)
+	for rows.Next() {
+		var product int
+		rows.Scan(&product)
 
+		products = append(products, product)
+	}
 	return products, err
 }

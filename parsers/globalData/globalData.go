@@ -100,7 +100,7 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) (bool, mode
 	url := product.Url
 	fmt.Println(url)
 
-	data, _ := os.ReadFile("./globalDataProductPage.html")
+	data, _ := os.ReadFile("./globalDataProductPageUpdate.html")
 	html := string(data)
 
 	updated, entry := CheckProductPageForUpdates(html, product.SKU, product.Vendor)
