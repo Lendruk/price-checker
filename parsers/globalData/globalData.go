@@ -37,7 +37,7 @@ func ParseQueryPage(html string) {
 		}
 		productSku := selection.Find(".ck-product-box-sku").Text()
 		productPrice, _ := utils.FormatPrice(selection.Find(".price__amount").Text())
-		products = append(products, models.NewVendorProduct(fullProductName, productPrice, productLink, models.GlobalData, productSku, productAvailability))
+		products = append(products, models.NewVendorProduct(fullProductName, productPrice, productLink, models.GlobalData, productSku, "", productAvailability))
 	})
 
 	for _, v := range products {
@@ -138,7 +138,9 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 	productSKU := strings.TrimSpace(document.Find("div[class='ck-product-sku-ean-warranty-info__item small d-inline-block my-1']").First().Text())
 	productSKU = strings.Split(productSKU, " ")[1]
 	productAvailability := models.InStock
+	productImageLink := "https://img.globaldata.pt/products/" + productSKU + ".jpg"
 
+	fmt.Println(productImageLink)
 	switch availabilityText {
 	case "Esgotado":
 		productAvailability = models.OutOfStock
@@ -150,7 +152,7 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 
 	productPrice, _ := utils.FormatPrice(strings.TrimSpace(productElement.Find(".price__amount").Text()))
 
-	vendorProduct := models.NewVendorProduct(productFullName, productPrice, url, models.GlobalData, productSKU, productAvailability)
+	vendorProduct := models.NewVendorProduct(productFullName, productPrice, url, models.GlobalData, productSKU, productImageLink, productAvailability)
 
 	return models.InsertProduct(vendorProduct), nil
 }

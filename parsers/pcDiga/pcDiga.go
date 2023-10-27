@@ -47,7 +47,7 @@ func ParseQueryPage(html string) {
 
 		priceElement := availabilityElement.Next()
 		productPrice, _ := utils.FormatPrice(priceElement.Text())
-		products = append(products, models.NewVendorProduct(productName, productPrice, productLink, models.PCDiga, productSku, productAvailability))
+		products = append(products, models.NewVendorProduct(productName, productPrice, productLink, models.PCDiga, productSku, "", productAvailability))
 	})
 
 	for _, v := range products {
@@ -139,7 +139,7 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 	productSKU := strings.TrimSpace(document.Find("div[class='flex flex-col lg:block text-xs']").First().Text())
 	productSKU = strings.Split(productSKU, " ")[1]
 
-	vendorProduct := models.NewVendorProduct(productFullName, productPrice, url, models.PCDiga, productSKU, productAvailability)
+	vendorProduct := models.NewVendorProduct(productFullName, productPrice, url, models.PCDiga, productSKU, "", productAvailability)
 
 	return models.InsertProduct(vendorProduct), nil
 }

@@ -14,35 +14,37 @@ const (
 )
 
 type VendorEntry struct {
-	Id           int
-	UniversalId  int
-	Price        float64
-	Url          string
-	Vendor       Vendor
-	SKU          string
-	FullName     string
-	LastUpdated  int64
-	Availability Availability
-	History      []ProductHistory
+	Id              int              `json:"id"`
+	UniversalId     int              `json:"universalId"`
+	Price           float64          `json:"price"`
+	Url             string           `json:"url"`
+	ProductImageUrl string           `json:"productImageUrl"`
+	Vendor          Vendor           `json:"vendor"`
+	SKU             string           `json:"sku"`
+	FullName        string           `json:"fullName"`
+	LastUpdated     int64            `json:"lastUpdated"`
+	Availability    Availability     `json:"availability"`
+	History         []ProductHistory `json:"history"`
 }
 
 type ProductHistory struct {
-	Id            int
-	VendorEntryId int
-	Price         float64
-	Availability  Availability
-	UpdatedAt     int64
+	Id            int          `json:"id"`
+	VendorEntryId int          `json:"vendorEntryId"`
+	Price         float64      `json:"price"`
+	Availability  Availability `json:"availability"`
+	UpdatedAt     int64        `json:"updatedAt"`
 }
 
-func NewVendorProduct(fullName string, price float64, url string, vendor Vendor, sku string, availability Availability) VendorEntry {
+func NewVendorProduct(fullName string, price float64, url string, vendor Vendor, sku string, productImageUrl string, availability Availability) VendorEntry {
 	return VendorEntry{
-		FullName:     fullName,
-		Price:        price,
-		Url:          url,
-		Vendor:       vendor,
-		SKU:          sku,
-		Availability: availability,
-		LastUpdated:  time.Now().Unix(),
+		FullName:        fullName,
+		Price:           price,
+		Url:             url,
+		Vendor:          vendor,
+		SKU:             sku,
+		ProductImageUrl: productImageUrl,
+		Availability:    availability,
+		LastUpdated:     time.Now().Unix(),
 	}
 }
 

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS vendorEntries (
   url TEXT,
   vendor INTEGER,
   sku TEXT,
+  productImageUrl TEXT,
   availability INTEGER,
   lastUpdated INTEGER,
   universalId INTEGER,

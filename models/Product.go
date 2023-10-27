@@ -93,9 +93,9 @@ func InsertProduct(product VendorEntry) Product {
 			universalProduct.VendorEntries = append(universalProduct.VendorEntries, vendorEntry)
 		}
 	} else {
-		statement, _ := db.GetDb().Prepare("INSERT INTO vendorEntries (fullName, price, url, vendor, sku, lastUpdated, availability, universalId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+		statement, _ := db.GetDb().Prepare("INSERT INTO vendorEntries (fullName, price, url, vendor, sku, lastUpdated, availability, universalId, productImageUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 		defer statement.Close()
-		_, err := statement.Exec(product.FullName, product.Price, product.Url, product.Vendor, product.SKU, product.LastUpdated, product.Availability, universalProduct.Id)
+		_, err := statement.Exec(product.FullName, product.Price, product.Url, product.Vendor, product.SKU, product.LastUpdated, product.Availability, universalProduct.Id, product.ProductImageUrl)
 
 		if err != nil {
 			panic(err)
