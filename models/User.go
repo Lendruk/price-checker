@@ -34,12 +34,12 @@ func GetUserById(userId int64) (User, error) {
 		return User{}, err
 	}
 
-	user.Watchlist = FetchUserWatchList(userId)
+	user.Watchlist = FetchUserWatchList(int(userId))
 
 	return user, nil
 }
 
-func FetchUserWatchList(userId int64) []Product {
+func FetchUserWatchList(userId int) []Product {
 	db := db.GetDb()
 
 	rows, err := db.Query("SELECT product from watchlists WHERE user = ?", userId)

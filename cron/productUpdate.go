@@ -13,7 +13,12 @@ import (
 )
 
 func RegisterProductUpdateCronJob() {
+	type ProductWithWatchlist struct {
+		models.Product
+		Watchers []int `json:"watchers"`
+	}
 
+	type ProductMap map[int]ProductWithWatchlist
 	// Registers cron job
 	scheduler := gocron.NewScheduler(time.UTC)
 
@@ -36,15 +41,48 @@ func RegisterProductUpdateCronJob() {
 		// Run parsers.UpdateProducts (need to update method to return products that have changes)
 		updatedEntries := parsers.UpdateProducts(vendorEntries)
 
+		// TODO: Refactor this in the future...
 		if len(updatedEntries) > 0 {
 			for _, webhook := range models.GetRegisteredWebhooks() {
+				watchedEntries := make(ProductMap)
+				users := models.GetWebbhookUsers(webhook.Id)
 
-				body, err := json.Marshal(updatedEntries)
+				for _, user := range users {
+					watchlist := models.FetchUserWatchList(user)
+
+					for _, watchedProduct := range watchlist {
+						for _, updatedEntry := range updatedEntries {
+							if updatedEntry.UniversalId == watchedProduct.Id {
+								_, ok := watchedEntries[updatedEntry.UniversalId]
+								if ok == false {
+									watchedEntries[updatedEntry.UniversalId] = ProductWithWatchlist{
+										Watchers: make([]int, 0),
+										Product:  watchedProduct,
+									}
+								}
+								entry := watchedEntries[updatedEntry.UniversalId]
+
+								alreadyInList := false
+								for _, w := range entry.Watchers {
+									if w == user {
+										alreadyInList = true
+										break
+									}
+								}
+
+								if !alreadyInList {
+									entry.Watchers = append(entry.Watchers, user)
+									watchedEntries[updatedEntry.UniversalId] = entry
+								}
+							}
+						}
+					}
+				}
+				body, err := json.Marshal(watchedEntries)
 
 				if err != nil {
 					panic(err)
 				}
-				// TODO: Separate updated list according to the webhook with users that have them in the watchlist
 				http.Post(webhook.Hook, "application/json", bytes.NewBuffer(body))
 			}
 		}

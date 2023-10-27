@@ -15,9 +15,9 @@ const (
 )
 
 type Product struct {
-	Id            int
-	SKU           string
-	VendorEntries []VendorEntry
+	Id            int           `json:"id"`
+	SKU           string        `json:"sku"`
+	VendorEntries []VendorEntry `json:"vendorEntries"`
 }
 
 func GetProducts() []Product {
