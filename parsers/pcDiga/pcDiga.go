@@ -133,13 +133,15 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 	productElement := document.Find("div[class='md:p-4 lg:bg-background-off lg:rounded-md hidden lg:grid gap-y-4']")
 
 	productPrice, _ := utils.FormatPrice(productElement.Find("div[class='text-primary text-2xl md:text-3xl font-black']").Text())
+	srcAttr, _ := document.Find("img").First().Attr("src")
+	productImageUrl := strings.TrimSpace(srcAttr)
 	availabilityText := strings.TrimSpace(productElement.Find(".stock_availability").Text())
 	productAvailability := mapAvailability(availabilityText)
 	productFullName := strings.TrimSpace(productElement.Find("h1[class='font-bold text-2xl']").Text())
 	productSKU := strings.TrimSpace(document.Find("div[class='flex flex-col lg:block text-xs']").First().Text())
 	productSKU = strings.Split(productSKU, " ")[1]
 
-	vendorProduct := models.NewVendorProduct(productFullName, productPrice, url, models.PCDiga, productSKU, "", productAvailability)
+	vendorProduct := models.NewVendorProduct(productFullName, productPrice, url, models.PCDiga, productSKU, productImageUrl, productAvailability)
 
 	return models.InsertProduct(vendorProduct), nil
 }

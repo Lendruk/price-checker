@@ -77,7 +77,7 @@ func getOrCreateProduct(sku string) Product {
 		return getOrCreateProduct(sku)
 	}
 
-	return Product{Id: result, SKU: sku, VendorEntries: make([]VendorEntry, 0)}
+	return Product{Id: result, SKU: sku, VendorEntries: GetVendorEntriesByUniversalId(result)}
 }
 
 func InsertProduct(product VendorEntry) Product {

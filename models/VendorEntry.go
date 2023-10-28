@@ -130,7 +130,7 @@ func GetAllVendorEntries() []VendorEntry {
 }
 
 func GetVendorEntriesByUniversalId(universalId int) []VendorEntry {
-	rows, err := db.GetDb().Query("SELECT id, fullName, price, url, vendor, sku, availability, lastUpdated FROM vendorEntries WHERE universalId = ?", universalId)
+	rows, err := db.GetDb().Query("SELECT id, fullName, price, url, vendor, sku, availability, productImageUrl, lastUpdated FROM vendorEntries WHERE universalId = ?", universalId)
 
 	if err != nil {
 		panic(err)
@@ -142,7 +142,7 @@ func GetVendorEntriesByUniversalId(universalId int) []VendorEntry {
 	for rows.Next() {
 		var product VendorEntry
 
-		err := rows.Scan(&product.Id, &product.FullName, &product.Price, &product.Url, &product.Vendor, &product.SKU, &product.Availability, &product.LastUpdated)
+		err := rows.Scan(&product.Id, &product.FullName, &product.Price, &product.Url, &product.Vendor, &product.SKU, &product.Availability, &product.ProductImageUrl, &product.LastUpdated)
 
 		product.History = GetVendorEntryHistory(product.Id)
 		if err != nil {
