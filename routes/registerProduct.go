@@ -35,16 +35,20 @@ func RegisterWebhookProduct(context *gin.Context) {
 	product, productError := parsers.RegisterProductFromUrl(body.Url)
 
 	if productError != nil {
-		context.JSON(500, gin.H{"message": "Error while registering the product"})
+		if productError.Error() == "Sent url does not have a parser" {
+			context.JSON(400, gin.H{"message": "Vendor not supported by price tracker"})
+		} else {
+			context.JSON(500, gin.H{"message": "Error while registering the product"})
+		}
+	} else {
+		// Add new product to user watchlist
+		if models.IsProductInWatchlist(body.User, product.Id) == false {
+			models.AddProductToWatchlist(body.User, product.Id)
+		}
+
+		// Add user to webhook user list if not there yet
+		models.AddUserToWebHook(body.Hook, body.User)
+
+		context.JSON(200, product.VendorEntries)
 	}
-
-	// Add new product to user watchlist
-	if models.IsProductInWatchlist(body.User, product.Id) == false {
-		models.AddProductToWatchlist(body.User, product.Id)
-	}
-
-	// Add user to webhook user list if not there yet
-	models.AddUserToWebHook(body.Hook, body.User)
-
-	context.JSON(200, product.VendorEntries)
 }
