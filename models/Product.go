@@ -60,6 +60,15 @@ func GetProductById(productId int) Product {
 	return product
 }
 
+func GetProductId(sku string) (int, error) {
+	row := db.GetDb().QueryRow("SELECT id FROM products WHERE sku = ?", sku)
+
+	var id int
+	err := row.Scan(&id)
+
+	return id, err
+}
+
 func getOrCreateProduct(sku string) Product {
 	row := db.GetDb().QueryRow("SELECT id FROM products WHERE sku = ?", sku)
 	var result int
@@ -87,10 +96,18 @@ func InsertProduct(product VendorEntry) Product {
 
 	// Vendor Product
 	if DoesVendorProductExist(product.SKU, product.Vendor) == true {
-		updated, vendorEntry, _ := UpdateVendorEntry(product.Price, product.Availability, product.SKU, product.Vendor)
+		updated, updatedVendorEntry, _ := UpdateVendorEntry(product.Price, product.Availability, product.SKU, product.Vendor)
 
 		if updated {
-			universalProduct.VendorEntries = append(universalProduct.VendorEntries, vendorEntry)
+			updatedEntries := make([]VendorEntry, 0)
+
+			for _, entry := range universalProduct.VendorEntries {
+				if entry.SKU == updatedVendorEntry.SKU && entry.Vendor == updatedVendorEntry.Vendor {
+					updatedEntries = append(updatedEntries, updatedVendorEntry)
+				} else {
+					updatedEntries = append(updatedEntries, entry)
+				}
+			}
 		}
 	} else {
 		statement, _ := db.GetDb().Prepare("INSERT INTO vendorEntries (fullName, price, url, vendor, sku, lastUpdated, availability, universalId, productImageUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")

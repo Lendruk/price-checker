@@ -20,6 +20,7 @@ func main() {
 
 	router.POST("/users", routes.RegisterUser)
 	router.PUT("/users/:id/watchlist", routes.AddProductToWatchlist)
+	router.GET("/users/:id/watchlist", routes.GetUserWatchList)
 	router.DELETE("/users/:id/watchlist/:product", routes.RemoveProductFromWatchlist)
 	router.GET("/users/:id", routes.GetUser)
 

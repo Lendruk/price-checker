@@ -25,9 +25,10 @@ func AddProductToWatchlist(userId int, productId int) error {
 	return err
 }
 
-func RemoveProductFromWatchlist(userId int, productId int) error {
+func RemoveProductFromWatchlist(userId int, productSKU string) error {
 	db := db.GetDb()
 
+	productId, err := GetProductId(productSKU)
 	statement, err := db.Prepare("DELETE FROM watchlists WHERE user = ? AND product = ?")
 
 	statement.Exec(userId, productId)

@@ -73,20 +73,33 @@ func AddProductToWatchlist(context *gin.Context) {
 
 func RemoveProductFromWatchlist(context *gin.Context) {
 	user, _ := context.Params.Get("id")
-	product, _ := context.Params.Get("product")
+	productSKU, _ := context.Params.Get("product")
 
 	parsedUserId, userConvErr := strconv.ParseInt(user, 10, 32)
-	parsedProductId, productConvErr := strconv.ParseInt(product, 10, 32)
 
-	if userConvErr != nil || productConvErr != nil {
+	if userConvErr != nil {
 		context.JSON(400, gin.H{"message": "No parameters sent in request"})
 	}
 
-	err := models.RemoveProductFromWatchlist(int(parsedUserId), int(parsedProductId))
+	err := models.RemoveProductFromWatchlist(int(parsedUserId), productSKU)
 
 	if err != nil {
 		context.JSON(500, gin.H{"message": "There was an error removing the product from the watchlist"})
 	}
 
 	context.JSON(200, gin.H{"message": "Removed product from watchlist successfully"})
+}
+
+func GetUserWatchList(context *gin.Context) {
+	user, _ := context.Params.Get("id")
+
+	parsedUserId, userConvErr := strconv.ParseInt(user, 10, 32)
+
+	if userConvErr != nil {
+		context.JSON(400, gin.H{"message": "Invalid user id sent"})
+	}
+
+	products := models.FetchUserWatchList(int(parsedUserId))
+
+	context.JSON(200, products)
 }
