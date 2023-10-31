@@ -6,6 +6,7 @@ import (
 	"price-tracker/models"
 	"price-tracker/utils"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-rod/rod"
@@ -58,7 +59,12 @@ func CheckProductPageForUpdates(html string, sku string, vendor models.Vendor) (
 	productElement := document.Find(".ck-product-cta-box-inner")
 	availabilityText := strings.TrimSpace(productElement.Find(".custom-element.availability-product").Find(".small").Text())
 	availabilityText = strings.TrimSpace(strings.Split(availabilityText, "-")[1])
+	rawPrice := strings.TrimSpace(productElement.Find(".price__amount").Text())
 	productAvailability := models.InStock
+
+	if rawPrice == "" || availabilityText == "" {
+		return false, models.VendorEntry{}
+	}
 
 	switch availabilityText {
 	case "Esgotado":
@@ -69,7 +75,7 @@ func CheckProductPageForUpdates(html string, sku string, vendor models.Vendor) (
 		productAvailability = models.InStock
 	}
 
-	productPrice, _ := utils.FormatPrice(strings.TrimSpace(productElement.Find(".price__amount").Text()))
+	productPrice, _ := utils.FormatPrice(rawPrice)
 
 	updated, entry, err := models.UpdateVendorEntry(productPrice, productAvailability, sku, vendor)
 
@@ -100,15 +106,14 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) (bool, mode
 	url := product.Url
 	fmt.Println(url)
 
-	data, _ := os.ReadFile("./globalDataProductPageUpdate.html")
-	html := string(data)
+	// data, _ := os.ReadFile("./globalDataProductPageUpdate.html")
+	// html := string(data)
 
-	updated, entry := CheckProductPageForUpdates(html, product.SKU, product.Vendor)
+	page := browser.MustPage(url)
+	// Wait stable being funky for some reason
+	time.Sleep(3 * time.Second)
 
-	// page := browser.MustPage(url)
-	// // Wait stable being funky for some reason
-	// time.Sleep(3 * time.Second)
-
+	updated, entry := CheckProductPageForUpdates(page.MustHTML(), product.SKU, product.Vendor)
 	// html, err := page.HTML()
 	// os.WriteFile("./globalDataProductPage.html", []byte(html), 0644)
 	// if err != nil {
@@ -122,10 +127,14 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 	fmt.Println(url)
 
 	// TODO replace with real browser call
-	data, _ := os.ReadFile("./globalDataProductPage.html")
-	html := string(data)
+	page := browser.MustPage(url)
+	// Wait stable being funky for some reason
+	time.Sleep(3 * time.Second)
 
-	document, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	// data, _ := os.ReadFile("./globalDataProductPage.html")
+	// html := string(data)
+
+	document, err := goquery.NewDocumentFromReader(strings.NewReader(page.MustHTML()))
 
 	if err != nil {
 		return models.Product{}, err
@@ -137,6 +146,7 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 	availabilityText = strings.TrimSpace(strings.Split(availabilityText, "-")[1])
 	productSKU := strings.TrimSpace(document.Find("div[class='ck-product-sku-ean-warranty-info__item small d-inline-block my-1']").First().Text())
 	productSKU = strings.Split(productSKU, " ")[1]
+	productSKU = strings.ReplaceAll(productSKU, " ", "")
 	productAvailability := models.InStock
 	productImageLink := "https://img.globaldata.pt/products/" + productSKU + ".jpg"
 

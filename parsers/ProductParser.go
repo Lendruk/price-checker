@@ -6,6 +6,7 @@ import (
 	"price-tracker/parsers/globalData"
 	"price-tracker/parsers/pcDiga"
 	"strings"
+	"time"
 
 	"github.com/go-rod/rod"
 )
@@ -50,6 +51,8 @@ func UpdateProducts(products []models.VendorEntry) []models.VendorEntry {
 				updatedEntries = append(updatedEntries, entry)
 			}
 		}
+
+		time.Sleep(2 * time.Second)
 	}
 
 	return updatedEntries

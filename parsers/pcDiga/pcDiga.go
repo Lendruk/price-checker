@@ -2,10 +2,10 @@ package pcDiga
 
 import (
 	"fmt"
-	"os"
 	"price-tracker/models"
 	"price-tracker/utils"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-rod/rod"
@@ -40,6 +40,7 @@ func ParseQueryPage(html string) {
 		productName := strings.TrimSpace(productLinkElement.Find("span").Text())
 		skuElement := productLinkElement.Next().Next()
 		productSku := skuElement.Text()
+		productSku = strings.ReplaceAll(productSku, " ", "")
 		availabilityElement := skuElement.Next()
 		availabilityText := availabilityElement.Find(".stock_availability").Text()
 
@@ -66,9 +67,14 @@ func CheckProductPageForUpdates(html string, sku string, vendor models.Vendor) (
 	}
 
 	productElement := document.Find("div[class='md:p-4 lg:bg-background-off lg:rounded-md hidden lg:grid gap-y-4']")
-
-	productPrice, _ := utils.FormatPrice(productElement.Find("div[class='text-primary text-2xl md:text-3xl font-black']").Text())
+	rawPrice := productElement.Find("div[class='text-primary text-2xl md:text-3xl font-black']").Text()
 	availabilityText := strings.TrimSpace(productElement.Find(".stock_availability").Text())
+
+	if rawPrice == "" || availabilityText == "" {
+		return false, models.VendorEntry{}
+	}
+
+	productPrice, _ := utils.FormatPrice(rawPrice)
 	productAvailability := mapAvailability(availabilityText)
 
 	updated, entry, err := models.UpdateVendorEntry(productPrice, productAvailability, sku, vendor)
@@ -80,39 +86,35 @@ func QueryProduct(productName string, browser *rod.Browser) {
 	url := PcDigaUrl + "/search?query=" + productName
 	fmt.Println(url)
 
-	data, _ := os.ReadFile("./pcDigaSearchPage.html")
-	html := string(data)
+	// data, _ := os.ReadFile("./pcDigaSearchPage.html")
+	// html := string(data)
+	page := browser.MustPage(url)
+	page.MustWaitStable()
+	html, err := page.HTML()
+
+	if err != nil {
+		panic(err)
+	}
+
 	ParseQueryPage(html)
-
-	// page := browser.MustPage(url)
-	// page.MustWaitStable()
-	// html, err := page.HTML()
-
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// os.WriteFile("./pcDigaSearchPage.html", []byte(html), 0644)
 }
 
 func UpdateProduct(product models.VendorEntry, browser *rod.Browser) (bool, models.VendorEntry) {
 	url := product.Url
 	fmt.Println(url)
+	// data, _ := os.ReadFile("./pcDigaProductPage.html")
+	// html := string(data)
 
-	data, _ := os.ReadFile("./pcDigaProductPage.html")
-	html := string(data)
+	page := browser.MustPage(url)
+	// Wait stable being funky for some reason
+	time.Sleep(3 * time.Second)
+
+	html, err := page.HTML()
+	if err != nil {
+		panic(err)
+	}
 
 	updated, entry := CheckProductPageForUpdates(html, product.SKU, product.Vendor)
-
-	// page := browser.MustPage(url)
-	// // Wait stable being funky for some reason
-	// time.Sleep(3 * time.Second)
-
-	// html, err := page.HTML()
-	// os.WriteFile("./pcDigaProductPage.html", []byte(html), 0644)
-	// if err != nil {
-	// 	panic(err)
-	// }
 
 	return updated, entry
 }
@@ -121,8 +123,16 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 	fmt.Println(url)
 
 	// TODO replace with real browser call
-	data, _ := os.ReadFile("./pcDigaProductPage.html")
-	html := string(data)
+	// data, _ := os.ReadFile("./pcDigaProductPage.html")
+	// html := string(data)
+	page := browser.MustPage(url)
+	// Wait stable being funky for some reason
+	time.Sleep(3 * time.Second)
+
+	html, err := page.HTML()
+	if err != nil {
+		panic(err)
+	}
 
 	document, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 
@@ -139,7 +149,13 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 	productAvailability := mapAvailability(availabilityText)
 	productFullName := strings.TrimSpace(productElement.Find("h1[class='font-bold text-2xl']").Text())
 	productSKU := strings.TrimSpace(document.Find("div[class='flex flex-col lg:block text-xs']").First().Text())
-	productSKU = strings.Split(productSKU, " ")[1]
+	splitSKU := strings.Split(productSKU, " ")
+
+	if len(splitSKU) > 2 {
+		productSKU = splitSKU[1] + splitSKU[2]
+	} else {
+		productSKU = splitSKU[1]
+	}
 
 	vendorProduct := models.NewVendorProduct(productFullName, productPrice, url, models.PCDiga, productSKU, productImageUrl, productAvailability)
 
