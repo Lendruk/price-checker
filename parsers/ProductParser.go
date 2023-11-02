@@ -4,6 +4,7 @@ import (
 	"errors"
 	"price-tracker/models"
 	"price-tracker/parsers/globalData"
+	pccomponentes "price-tracker/parsers/pcComponentes"
 	"price-tracker/parsers/pcDiga"
 	"strings"
 	"time"
@@ -29,6 +30,8 @@ func RegisterProductFromUrl(url string) (models.Product, error) {
 		return globalData.CreateFromProductPage(url, browser)
 	} else if strings.Contains(url, "pcdiga") {
 		return pcDiga.CreateFromProductPage(url, browser)
+	} else if strings.Contains(url, "pccomponentes") {
+		return pccomponentes.CreateFromProductPage(url, browser)
 	}
 	return models.Product{}, errors.New("Sent url does not have a parser")
 }
@@ -47,6 +50,11 @@ func UpdateProducts(products []models.VendorEntry) []models.VendorEntry {
 			}
 		case models.PCDiga:
 			updated, entry := pcDiga.UpdateProduct(entry, browser)
+			if updated {
+				updatedEntries = append(updatedEntries, entry)
+			}
+		case models.PcComponentes:
+			updated, entry := pccomponentes.UpdateProduct(entry, browser)
 			if updated {
 				updatedEntries = append(updatedEntries, entry)
 			}

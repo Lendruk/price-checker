@@ -126,7 +126,6 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) (bool, mode
 func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, error) {
 	fmt.Println(url)
 
-	// TODO replace with real browser call
 	page := browser.MustPage(url)
 	// Wait stable being funky for some reason
 	time.Sleep(3 * time.Second)

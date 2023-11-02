@@ -22,7 +22,7 @@ func RegisterProductUpdateCronJob() {
 	// Registers cron job
 	scheduler := gocron.NewScheduler(time.UTC)
 
-	scheduler.Every(30).Minute().WaitForSchedule().Do(func() {
+	scheduler.Every(12).Hour().WaitForSchedule().Do(func() {
 		fmt.Println("Updating products")
 		// Get all vendor products that have watchers
 		productIds, _ := models.GetAllProductsInWatchlists()

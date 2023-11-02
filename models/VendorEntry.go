@@ -11,6 +11,7 @@ type Vendor int
 const (
 	GlobalData Vendor = iota
 	PCDiga
+	PcComponentes
 )
 
 type VendorEntry struct {
