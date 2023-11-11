@@ -9,6 +9,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-rod/rod"
+	"github.com/go-rod/stealth"
 )
 
 const PcDigaUrl = "https://www.pcdiga.com"
@@ -88,7 +89,8 @@ func QueryProduct(productName string, browser *rod.Browser) {
 
 	// data, _ := os.ReadFile("./pcDigaSearchPage.html")
 	// html := string(data)
-	page := browser.MustPage(url)
+	page := stealth.MustPage(browser)
+	page.MustNavigate(url)
 	page.MustWaitStable()
 	html, err := page.HTML()
 
@@ -125,7 +127,8 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 	// TODO replace with real browser call
 	// data, _ := os.ReadFile("./pcDigaProductPage.html")
 	// html := string(data)
-	page := browser.MustPage(url)
+	page := stealth.MustPage(browser)
+	page.MustNavigate(url)
 	// Wait stable being funky for some reason
 	time.Sleep(3 * time.Second)
 

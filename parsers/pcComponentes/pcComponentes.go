@@ -9,6 +9,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-rod/rod"
+	"github.com/go-rod/stealth"
 )
 
 func UpdateProduct(product models.VendorEntry, browser *rod.Browser) (bool, models.VendorEntry) {
@@ -18,7 +19,8 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) (bool, mode
 	// data, _ := os.ReadFile("./pcComponentesProductPageUpdate.html")
 	// html := string(data)
 
-	page := browser.MustPage(url)
+	page := stealth.MustPage(browser)
+	page.MustNavigate(url)
 	// Wait stable being funky for some reason
 	time.Sleep(3 * time.Second)
 
@@ -32,13 +34,13 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 
 	// data, _ := os.ReadFile("./pcComponentesProductPage.html")
 	// html := string(data)
-	page := browser.MustPage(url)
+	page := stealth.MustPage(browser)
+	page.MustNavigate(url)
 	// Wait stable being funky for some reason
 	time.Sleep(3 * time.Second)
 
 	// data, _ := os.ReadFile("./globalDataProductPage.html")
 	// html := string(data)
-
 	document, err := goquery.NewDocumentFromReader(strings.NewReader(page.MustHTML()))
 
 	if err != nil {
@@ -49,7 +51,7 @@ func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, er
 	productFullName := document.Find("#pdp-title").Text()
 	productPrice := productElement.Find("#pdp-price-current-integer").Text()
 	productPriceFormatted, _ := utils.FormatPrice(strings.TrimSpace(productPrice))
-	productImage, _ := document.Find(".sc-iEkSXm.jkRqbZ").Attr("src")
+	productImage, _ := document.Find(".sc-iBbrVh.jhaxZx").Attr("src")
 	productSKU := document.Find("#pdp-mpn").Text()
 	productSKU = strings.Split(productSKU, " ")[1]
 	productSKU = strings.ReplaceAll(productSKU, "Cod.", "")

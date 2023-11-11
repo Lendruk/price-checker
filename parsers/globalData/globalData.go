@@ -10,6 +10,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-rod/rod"
+	"github.com/go-rod/stealth"
 )
 
 const GlobalDataUrl = "https://www.globaldata.pt"
@@ -109,7 +110,8 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) (bool, mode
 	// data, _ := os.ReadFile("./globalDataProductPageUpdate.html")
 	// html := string(data)
 
-	page := browser.MustPage(url)
+	page := stealth.MustPage(browser)
+	page.MustNavigate(url)
 	// Wait stable being funky for some reason
 	time.Sleep(3 * time.Second)
 
@@ -126,7 +128,8 @@ func UpdateProduct(product models.VendorEntry, browser *rod.Browser) (bool, mode
 func CreateFromProductPage(url string, browser *rod.Browser) (models.Product, error) {
 	fmt.Println(url)
 
-	page := browser.MustPage(url)
+	page := stealth.MustPage(browser)
+	page.MustNavigate(url)
 	// Wait stable being funky for some reason
 	time.Sleep(3 * time.Second)
 
